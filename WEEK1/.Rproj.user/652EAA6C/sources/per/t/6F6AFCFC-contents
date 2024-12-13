@@ -1,0 +1,54 @@
+#QUESTION 1
+my_name<-"Shadan Khan SIT 741, Task 1"
+print(my_name)
+#Question 2
+data<-read.csv("weather.csv")
+
+#Question 3
+head(data)
+
+#Question 4
+
+num_observations<-nrow(data)
+num_variables<-ncol(data)
+cat("The number of observations:",num_observations,"The number of variables:",num_variables)
+
+#Question 5
+library(dplyr)
+data<- data %>% mutate(origin=factor(origin)) %>% {print(class(.$origin));.}
+
+#Question 6
+
+# Calculate mean and median for each level of 'origin'
+summary_data <- data %>%
+  group_by(origin) %>%
+  summarise(
+    mean_temp = mean(temp, na.rm = TRUE),
+    median_temp = median(temp, na.rm = TRUE)
+  )
+
+print(summary_data)
+
+
+#Question 7
+
+library(nycflights13)
+flights_data <- nycflights13::flights
+airports_data <- nycflights13::airports
+
+# Merge the latitude and longitude for the origin airports
+flights_data <- flights_data %>%
+  left_join(airports_data, by = c("origin" = "faa")) %>%
+  rename(o_lat = lat, o_lon = lon)
+
+# Merge the latitude and longitude for the destination airports
+flights_data <- flights_data %>%
+  left_join(airports_data, by = c("dest" = "faa")) %>%
+  rename(d_lat = lat, d_lon = lon)
+
+# Select relevant columns to display
+flights_data <- flights_data %>%
+  select(year, month, day, dep_time, arr_time, origin, dest, o_lat, o_lon, d_lat, d_lon, everything())
+
+# Display the first few rows of the updated dataset
+print(head(flights_data))

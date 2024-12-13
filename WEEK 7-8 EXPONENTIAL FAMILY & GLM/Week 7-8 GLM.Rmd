@@ -1,0 +1,149 @@
+---
+title: "WEEK 7-8 EXPONENTIAL FAMILY & GLM"
+author: "Shadan Khan"
+date: "2024-09-16"
+output: pdf_document
+---
+###1. Define a string including your name, unit name, task name; and print
+
+```{r }
+my_information <- "Name: SHADAN KHAN, Unit: SIT741 , Task: Data Analysis in R in GLM"
+print(my_information)
+```
+###2. Load the same abalone data set as for the previous pass task.
+```{r}
+#Loading the Abalone Data Set
+
+abalone_data <- read.csv("https://archive.ics.uci.edu/ml/machine-learning-databases/abalone/abalone.data" , header=FALSE)
+colnames(abalone_data) <- c("Sex", "Length" , "Diameter" , "Height" ,"Whole_Weight", "Shucked_Weight","Viscera_Weight","Shell_Weight","Rings" )
+###Converting Rings To Age
+abalone_data$Age <- abalone_data$Rings + 1.5
+```
+
+###3. Build a linear model using lm() that predicts the age (V9) from two of the numeric variables (V2-V8).
+
+```{r}
+#Showcasing Linear model predicting Age from Two numerical variables i.e. (Length & Whole_Weight)
+linear_model <- lm(Age ~ Length + Whole_Weight,data = abalone_data)
+summary(linear_model)
+```
+###4. Use the broom and ggplot packages to check the QQ-plot, residuals (for the whole
+###model, as well as for each predictor variable), and high leverage points (and whether
+###or not any outliers should be excluded from the model).
+
+```{r}
+#We load required packages
+library(broom)
+library(ggplot2)
+
+#We will check residuals & QQ-Plot 
+model_diagram <- augment(linear_model)
+
+#We will make QQ-Plot
+ggplot(model_diagram,aes(sample = .resid)) + 
+  stat_qq() +
+  stat_qq_line() +
+  ggtitle("QQ Plot for the Residuals")
+
+#We will showcase residual plot for whole model
+
+ggplot(model_diagram,aes(x = .fitted, y=.resid)) +
+  geom_point() +
+  geom_smooth(method = "loess") +
+  ggtitle("Residuals vs Fitted")
+
+#We will check for high leverage points
+ggplot(model_diagram, aes(x= .hat, y=.std.resid)) +
+  geom_point(aes(color = .cooksd > 4/(nrow(abalone_data)- length(coef(linear_model))))) +
+  ggtitle("Leverage Points")
+
+```
+###5. Fit a generalised linear model using glm() with an additional predictor variable
+###compared to what you have in step 3. Comment briefly on differences of fit between
+###the models.
+
+```{r}
+#First determining GLM with one additional predictor variable (Diameter)
+
+glm_model <- glm(Age ~ Length + Whole_Weight + Diameter , family = gaussian(), data = abalone_data)
+summary(glm_model)
+
+#Note: Here we can compare the summary outputs of 'lm_model' and 'glm_model' to discuss the fit , residual deviance, AIC & model cofficients.
+
+#Now comparing AIC of both models
+AIC (linear_model , glm_model)
+```
+###6. Download the hospital emergency department admissions dataset.
+
+```{r}
+heda <- read.csv("https://data.gov.au/data/dataset/6bfec5ea-207e-4d67-8965-c7e72290844b/resource/33d84954-b13a-4f4e-afb9-6468e287fa3c/download/govhack3.csv")
+
+summary(heda)
+
+head(heda)
+
+```
+###7. Plot the attendance and admissions data over time (as a single graph) for one of the
+###hospitals using ggplot. You will need to make some adjustments to the dataset in
+###order to do this. You can use, e.g., dmy(“10-JUL-2024”) in the lubridate package to
+###convert it to a ‘date’ datatype.
+
+```{r}
+#loading lubridate
+library(lubridate)
+
+#Converting data column to data type 
+heda$Date <- dmy(heda$X)
+
+#Now we will filter data for specific hospital
+colnames(heda)
+
+#now by plotting admissions and attendance over time 
+
+ggplot(heda, aes(x = Date)) +
+  geom_line(aes(y= Fremantle.Hospital),color = "green") +
+  geom_line(aes(y= X.7), color= "orange")
+
+
+```
+### 8. Use the wkday functions to show the data for a single day of the week and plot the
+###data over time, then compare this to the results for another day.
+
+```{r}
+#First we Filter data for the single day of the week (e.g Tuesday)
+
+library(lubridate)
+
+tuesday_data <- heda[weekdays(heda$Date) == "Tuesday" , ]
+
+#Now Plotting Tuesday data over time
+ggplot(tuesday_data, aes(x= Date , y = Fremantle.Hospital)) + geom_line()
+
+#Filtering and plotting data for another day 
+
+thursday_data <- heda[weekdays(heda$Date) == "Thursday" , ]
+
+ggplot(thursday_data , aes(x= Date , y = Fremantle.Hospital)) + geom_line()
+
+```
+
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

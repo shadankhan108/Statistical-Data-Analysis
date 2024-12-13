@@ -1,0 +1,168 @@
+---
+title: "GAM and Model selection Weeks 9-10"
+author: "Shadan Khan"
+date: "2024-09-22"
+output: pdf_document
+---
+
+# 1. Define and print a string including your name, unit name, and task name
+
+```{r}
+
+name <- "Shadan Khan"
+unit_name <- "Statistical Data Analysis"
+task_name <- "T6 P6"
+message <- paste("Name:", name, " Unit Name:", unit_name, " Task Name:", task_name)
+print(message)
+
+```
+##2. Load the gapminder dataset. For Afghanistan only, fit a generalised additive model
+##using gam() that predicts life expectancy from the population (using the default
+##smoothing function). Report on the model outputs.
+
+```{r}
+# Load necessary libraries
+library(gapminder)
+library(mgcv)
+
+# Filter for Afghanistan data
+afghanistan_data <- gapminder[gapminder$country == "Afghanistan",]
+
+# Fit a generalized additive model predicting life expectancy from population
+gam_model <- gam(lifeExp ~ s(pop), data = afghanistan_data)
+
+# Summarize the model output
+summary(gam_model)
+
+# Plot the model to visualize the smooth term
+plot(gam_model, residuals = TRUE, rug = TRUE, main = "GAM Plot for Life Expectancy vs Population (Afghanistan)", se = TRUE)
+
+# Add labels to the plot
+title(xlab = "Population", ylab = "Smoothed Life Expectancy")
+```
+### 3.Repeat the fitting process, this time using one of the other smoothing functions (search “smooth.terms” in the R ###studio help window to see those available). Show how changing the value of k affects the fit and AIC value.
+```{r}
+# Load necessary libraries
+library(gapminder)
+library(mgcv)
+
+# Filter for Afghanistan data
+afghanistan_data <- gapminder[gapminder$country == "Afghanistan",]
+
+# Fit two generalized additive models with bs = "cr" and different values of k
+model_cr_k7 <- gam(lifeExp ~ s(pop, bs = "cr", k = 7), data = afghanistan_data)
+model_cr_k11 <- gam(lifeExp ~ s(pop, bs = "cr", k = 11), data = afghanistan_data)
+
+# Compare models using AIC
+AIC_values <- AIC(model_cr_k7, model_cr_k11)
+print(AIC_values)
+
+# Plot the GAM model with k = 7
+plot(model_cr_k7, residuals = TRUE, rug = TRUE, main = "GAM Plot for k = 7 (bs = 'cr')", se = TRUE)
+title(xlab = "Population", ylab = "Smoothed Life Expectancy (k = 5)")
+
+# Plot the GAM model with k = 11
+plot(model_cr_k11, residuals = TRUE, rug = TRUE, main = "GAM Plot for k = 11 (bs = 'cr')", se = TRUE)
+title(xlab = "Population", ylab = "Smoothed Life Expectancy (k = 11)")
+###3. Repeat the fitting process, this time using one of the other smoothing functions
+###(search “smooth.terms” in the R studio help window to see those available). Show how
+###changing the value of k affects the fit and AIC value.
+
+model_cr_k7 <- gam(lifeExp ~ s(pop, bs = "cr", k = 7), data = afghanistan_data)
+model_cr_k11 <- gam(lifeExp ~ s(pop, bs = "cr", k = 11), data = afghanistan_data)
+# Compare models using AIC
+AIC_values <- AIC(model_cr_k7, model_cr_k11)
+print(AIC_values)
+
+```
+### 4.Load the abalone dataset. Use the rsample library and vfold_cv() function to create training and test sets with ###10-fold cross-validation.
+
+```{r}
+#Loaded necessary libraries
+library(rsample)
+library(mgcv)
+abalone_data<-read.csv("~/Downloads/abalone.csv")
+# Assuming abalone_data is already loaded
+# Create 10-fold cross-validation
+summary(abalone_data)
+vfold <- vfold_cv(abalone_data, v = 10)
+
+```
+
+### 5.Use the fit_gam() and predict_gam() functions defined in the online R activity, then generate fitted models and 
+###preditictions for each fold.
+
+```{r}
+# Define fit_gam() function
+fit_gam <- function(train_data) {
+gam(Rings ~ s(Length), data = train_data) # Using Length to predict Rings
+}
+# Define predict_gam() function
+predict_gam <- function(model, test_data) {
+predict(model, newdata = test_data)
+}
+# Fit GAM models and generate predictions for each fold
+results <- lapply(vfold$splits, function(split) {
+train_data <- analysis(split)
+test_data <- assessment(split)
+model <- fit_gam(train_data)
+predictions <- predict_gam(model, test_data)
+list(model = model, predictions = predictions, actual = test_data$Rings)
+})
+```
+
+## 6.Report on the errors and their variation for each fold.
+
+```{r}
+
+# Calculate Mean Squared Errors for each fold
+errors <- lapply(results, function(res) {
+  mean((res$predictions - res$actual)^2) # Mean Squared Error
+})
+
+# Calculate mean and standard deviation of errors
+mean_error <- mean(unlist(errors))
+sd_error <- sd(unlist(errors))
+
+# Print mean error and standard deviation
+print(paste("Mean Error:", mean_error))
+print(paste("Error Standard Deviation:", sd_error))
+print("The errors for each of the folds are: ")
+print(errors)
+
+# Plotting the errors and their variation for each fold
+library(ggplot2)
+
+# Convert the errors list to a data frame for plotting
+errors_df <- data.frame(Fold = seq_along(errors), MSE = unlist(errors))
+
+# Create a bar plot for errors with error bars
+ggplot(errors_df, aes(x = factor(Fold), y = MSE)) +
+  geom_bar(stat = "identity", fill = "red") +
+  geom_errorbar(aes(ymin = MSE - sd_error, ymax = MSE + sd_error), width = 0.2) +
+  labs(title = "Mean Squared Errors for Each Fold with Standard Deviation",
+       x = "Fold Number", y = "Mean Squared Error (MSE)") +
+  theme_minimal()
+
+```
+
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

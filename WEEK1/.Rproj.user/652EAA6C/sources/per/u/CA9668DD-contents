@@ -1,0 +1,27 @@
+am<-function(x){
+  return(sum(x)/length(x))
+}
+gm<-function(x){
+  return(prod(x)^(1/length(x)))
+}
+
+hm<-function(x){
+  return(length(x)/sum(x^-1))
+  
+}
+
+am.new<-function(x,y){
+  return(sum(x,y)/2)
+}
+
+cq<-function(x,y){
+  if(x==0 && y==0) return(0)
+  return((x^2+y^2)/(x+y))
+  
+}
+
+
+
+
+
+

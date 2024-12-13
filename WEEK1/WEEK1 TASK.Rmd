@@ -1,0 +1,83 @@
+---
+title: "WEEK1 ASSIGNEMT"
+author: "Shadan Khan"
+date: "2024-07-15"
+output:
+  word_document: default
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+```{r}
+info_string <- "Name: Shadan Khan, Unit Name: Statical Data Analysis, Task Name: T01.P1"
+
+print(info_string)
+
+```
+
+```{r}
+
+
+
+data(iris)
+
+head(iris)
+
+```
+```{r}
+num_observations <- nrow(iris)
+print(paste("Number of observations:", num_observations))
+
+
+num_variables <- ncol(iris)
+print(paste("Number of variables:", num_variables))
+```
+```{r}
+
+str(iris)
+
+```
+```{r}
+
+summarize_variables <- function(data) {
+  for (variable in names(data)) {
+    cat("Variable:", variable, "\n")
+    if (is.factor(data[[variable]])) {
+      cat("Categorical summary:\n")
+      print(table(data[[variable]]))
+    } else if (is.numeric(data[[variable]])) {
+      cat("Mean:", mean(data[[variable]], na.rm = TRUE), "\n")
+    }
+    cat("\n")
+  }
+}
+
+summarize_variables(iris)
+
+```
+
+

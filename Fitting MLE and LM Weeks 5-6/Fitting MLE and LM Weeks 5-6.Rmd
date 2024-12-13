@@ -1,0 +1,211 @@
+---
+title: "Fitting MLE and LM Weeks 5-6"
+author: "Shadan Khan"
+date: "2024-09-16"
+output: pdf_document
+---
+
+```{r}
+## Task 1: Define and Print a String
+name <- "Shadan Khan"
+unit_name <- "SIT741"
+task_name <- "Fitting MLE And LM"
+# Create and print the string
+result_string <- paste("Name:", name, ", Unit Name:", unit_name, ", Task Name:", task_name)
+print(result_string)
+
+```
+###Question 2 Use rbinom() to generate 30 random data observations. Set the number of trials
+###to 10 and choose your own value of p (the probability of success).
+```{r}
+# First we Generate 30 random data observations using rbinom
+set.seed(123) # for reproducibility
+n <- 30
+trials <- 10
+p <- 0.6
+
+# Generate random binomial data
+random_data <- rbinom(n, size = trials, prob = p)
+# Print the generated data
+print(random_data)
+```
+
+###Question 3 Plot its histogram along with the theoretical distribution.
+###- To use stat_function(), you can define a new function of a single variable using your trials
+###and probability parameters, e.g.:
+###dbinom_10_5 <- function(x) {dbinom(x,size = 10,prob = 0.5)}
+###- You may also need to include the value of n as one of your stat_function() arguments,
+###which gives the number of points to evaluate on. The default is 101, but you need your
+###function to only be evaluated on whole numbers
+
+```{r}
+# Load necessary library
+library(ggplot2)
+
+# Sample data: replace this with your actual data
+data <- rbinom(100, size = 10, prob = 0.6)
+
+# Plot histogram
+ggplot(data.frame(x = data), aes(x = x)) +
+  geom_histogram(aes(y = ..density..), binwidth = 1, fill = "green", color = "black") +
+  
+  # Add the theoretical binomial distribution
+  stat_function(fun = function(x) dbinom(x, size = 10, prob = 0.6),
+                color = "orange", size = 1) +
+  
+  labs(title = "Histogram with Theoretical Binomial Distribution",
+       x = "Number of Successes",
+       y = "Density") +
+  theme_minimal()
+
+```
+###4. Use mle2() to estimate the parameters of a normal distribution that matches your data.
+###- Define the negative log-likelihood function
+###- Choose appropriate initial parameters and then use mle2() to find your estimates.
+###- Comment on how these compare to the theoretical values of the mean and standard
+###deviation obtained using np and sqrt(npr).
+###- Repeat the process with trials set to 100. How do the estimates for mean and sd
+###compare now?
+
+```{r}
+# Load necessary libraries
+library(bbmle)
+
+# Function to calculate the negative log-likelihood for normal distribution
+neg_log_likelihood <- function(mu, sigma, data) {
+  -sum(dnorm(data, mean = mu, sd = sigma, log = TRUE))
+}
+
+# Generate data with prob = 0.6, size = 10, and trials = 100
+set.seed(123)  # For reproducibility
+data_100 <- rbinom(100, size = 10, prob = 0.6)
+
+# Perform Maximum Likelihood Estimation
+fit <- mle2(minuslogl = function(mu, sigma) neg_log_likelihood(mu, sigma, data_100),
+            start = list(mu = mean(data_100), sigma = sd(data_100)),
+            data = list(data = data_100))
+
+# Display the results
+summary(fit)
+
+# Compare with theoretical values
+mean_theoretical <- mean(data_100)
+sd_theoretical <- sd(data_100)
+cat("Estimated Mean:", coef(fit)["mu"], "\n")
+cat("Estimated SD:", coef(fit)["sigma"], "\n")
+cat("Theoretical Mean:", mean_theoretical, "\n")
+cat("Theoretical SD:", sd_theoretical, "\n")
+
+# Repeat with different sample size
+data_10 <- rbinom(10, size = 10, prob = 0.6)
+
+fit_10 <- mle2(minuslogl = function(mu, sigma) neg_log_likelihood(mu, sigma, data_10),
+               start = list(mu = mean(data_10), sigma = sd(data_10)),
+               data = list(data = data_10))
+
+# Display the results for smaller sample size
+summary(fit_10)
+
+# Compare with theoretical values
+mean_theoretical_10 <- mean(data_10)
+sd_theoretical_10 <- sd(data_10)
+cat("Estimated Mean (10 trials):", coef(fit_10)["mu"], "\n")
+cat("Estimated SD (10 trials):", coef(fit_10)["sigma"], "\n")
+cat("Theoretical Mean (10 trials):", mean_theoretical_10, "\n")
+cat("Theoretical SD (10 trials):", sd_theoretical_10, "\n")
+
+```
+###Question 5 Read the “abalone” data set using:
+abalone <- read.table(“http://archive.ics.uci.edu/ml/machine-learning-databases/abalone/
+abalone.data”, sep = “,”)
+- Information about the attributes can be found here: https://archive.ics.uci.edu/ml/machinelearning-databases/abalone/abalone.names
+- replace the variables names V1, V2, etc., with appropriate labels.
+
+
+```{r}
+# Load the dataset
+abalone <- read.table("http://archive.ics.uci.edu/ml/machine-learning-databases/abalone/abalone.data", sep = ",")
+
+# Replace default column names (V1, V2, ...) with appropriate labels
+colnames(abalone) <- c("Sex", "Length", "Diameter", "Height", 
+                       "WholeWeight", "ShuckedWeight", "VisceraWeight", 
+                       "ShellWeight", "Rings")
+
+# Preview the dataset to verify the column names
+head(abalone)
+
+```
+###Question 6 Use ggplot to produce:
+###- a multi-grid barplot showing the distribution of age (V9) for each of males, females and
+###infants
+###- comparative violin plot to compare distribution of males, females and infants (V1) with
+###respect to one of variables V2-V8.
+###- comparative boxplot to compare distribution for each age (V9) with respect to one of the
+###variables V2-V8. You will need to ensure that age is a factor variable to use geom_boxplot().
+###- a scatterplot showing the relationship between one of the variables V2-V8 with age (V9),
+###filtering the sex (V1) to one of either males, females or infants. Add a geom_smooth()
+###trendline using method = “lm”
+
+```{r}
+library(ggplot2)
+# Convert Rings to Age (Rings + 1.5 years is the age)
+abalone$Age <- abalone$Rings + 1.5
+
+# Create a barplot showing the distribution of age by Sex
+ggplot(abalone, aes(x = Age)) +
+  geom_bar() +
+  facet_grid(~ Sex) +
+  theme_minimal() +
+  labs(title = "Age Distribution by Sex (Male, Female, Infant)", x = "Age (Years)", y = "Count")
+
+# Violin plot to compare WholeWeight distribution by Sex
+ggplot(abalone, aes(x = Sex, y = WholeWeight, fill = Sex)) +
+  geom_violin(trim = FALSE) +
+  theme_minimal() +
+  labs(title = "Comparative Violin Plot: WholeWeight by Sex", x = "Sex", y = "Whole Weight (grams)")
+# Ensure Age is a factor variable
+abalone$Age <- as.factor(abalone$Age)
+
+# Create a boxplot comparing Length (V2) distribution by Age
+ggplot(abalone, aes(x = Age, y = Length, fill = Age)) +
+  geom_boxplot() +
+  theme_minimal() +
+  labs(title = "Boxplot: Length Distribution by Age", x = "Age (Years)", y = "Length (mm)")
+# Filter for males and create a scatterplot
+ggplot(subset(abalone, Sex == "M"), aes(x = Age, y = Diameter)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  theme_minimal() +
+  labs(title = "Scatterplot: Diameter vs Age (Males)", x = "Age (Years)", y = "Diameter (mm)")
+
+```
+###Question 7 Build a linear model using lm() for the data in the scatterplot created in step 6.
+###Print the coefficients.
+
+```{r}
+# Build a linear model using lm() for males, predicting Diameter based on Age
+model <- lm(Diameter ~ Age, data = subset(abalone, Sex == "M"))
+
+# Print the coefficients of the linear model
+summary(model)$coefficients
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
